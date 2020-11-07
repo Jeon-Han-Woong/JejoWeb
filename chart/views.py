@@ -1,9 +1,11 @@
 from django.shortcuts import render
-
+import pandas as pd
+import requests
+import ast
 
 def chart1(request):
     import pymysql
-    dbCon = pymysql.connect()
+    dbCon = pymysql.connect('')
     cursor = dbCon.cursor()
 
     with dbCon:
@@ -38,7 +40,7 @@ def chart1(request):
 
 def chart2(request):
     import pymysql
-    dbCon = pymysql.connect()
+    dbCon = pymysql.connect('')
     cursor = dbCon.cursor()
 
     with dbCon:
@@ -73,7 +75,7 @@ def chart2(request):
 
 def chart3(request):
     import pymysql
-    dbCon = pymysql.connect()
+    dbCon = pymysql.connect('')
     cursor = dbCon.cursor()
 
     with dbCon:
@@ -97,7 +99,7 @@ def chart3(request):
 def chart4(request):
     import pymysql
 
-    dbCon = pymysql.connect()
+    dbCon = pymysql.connect('')
     cursor = dbCon.cursor()
 
     with dbCon:
@@ -215,4 +217,147 @@ def chart4(request):
         'cost_SGP': cost_SGP,
         'amount_KOR': amount_KOR,
         'cost_KOR': cost_KOR,
+    })
+
+
+
+def chart5(request):
+    return render(request, "chart5.html", {
+    })
+
+def chart6(request):
+    context = {}
+
+    json = request.GET['data']
+    adict = ast.literal_eval(json)
+
+    code = adict[0]['code']
+    year = adict[0]['year']
+
+    title = "%s의 %s년 실적 비교" % (code, year)
+
+    convert = {"iDate":"월","iInit":"기초","iClose":"기말","iInput":"입고","iOutput":"출고","iRate":"재고회전","iPredict":"재고회전예측"}
+
+    query1 = '''{
+          dateInven(bsnscd:"%s", iDate:"%s") {
+            measures
+            iDate
+            iInit
+            iClose
+            iInput
+            iOutput
+            iRate
+            iPredict
+          }
+        }
+        '''% (code, year)
+    url = 'http://127.0.0.1:8000/graphql/'
+    r = requests.get(url, json={'query': query1})
+    Jdata = r.json()
+    rawData = Jdata['data']['dateInven']
+    df=pd.DataFrame(rawData)
+    rsAPI=[tuple(r) for r in df.to_numpy()]
+
+    amount = []
+    cost = []
+
+    for data in rsAPI:
+        if'amount' == data[0]:
+            amount.append(data[1:len(data)])
+        elif'cost' == data[0]:
+            cost.append(data[1:len(data)])
+
+    amountTable = '''
+    <table id="amountTable" class="table table-striped">
+    <thead class="thead-dark">
+    <tr>
+    '''
+
+    for key, value in rawData[0].items():
+        if key != 'measures':
+            amountTable += '<th><B>%s</B></th>' % convert.get(key)
+    amountTable += '''
+    </tr>
+    </thead>
+    <tbody>
+    '''
+    for a in amount:
+        amountTable += '<tr>'
+        index = 0
+        for i in range(0,len(a)):
+            if index == 0 :
+                amountTable += '<td>%s</td>' % a[i][4:len(a[i])]
+            else :
+                amountTable += '<td>%s</td>' % a[i]
+            index+=1
+        amountTable += '</tr>'
+    amountTable += '''
+    </tbody>
+    </table>
+    '''
+
+
+    costTable = '''
+    <table id="costTable" class="table table-striped">
+    <thead class="thead-dark">
+    <tr>
+    '''
+
+    for key, value in rawData[0].items():
+        if key != 'measures':
+            costTable += '<th><B>%s</B></th>' % convert.get(key)
+    costTable += '''
+    </tr>
+    </thead>
+    <tbody>
+    '''
+    for c in cost:
+        costTable += '<tr>'
+        index=0
+        for i in range(0,len(c)):
+            if index == 0 :
+                costTable += '<td>%s</td>' % c[i][4:len(c[i])]
+            else :
+                costTable += '<td>%s</td>' % c[i]
+            index+=1
+        costTable += '</tr>'
+    costTable += '''
+    </tbody>
+    </table>
+    '''
+
+    amountChartCol = "["
+
+    index = 0
+    for key, value in rawData[0].items():
+        if index >= 2 and index <= 6:
+            amountChartCol += '["%s",' % convert.get(key)
+            for a in amount:
+                amountChartCol += '%s,' % a[index-1]
+            amountChartCol += '],'
+        index += 1
+    amountChartCol += '],'
+
+    costChartCol = "["
+
+    index = 0
+    for key, value in rawData[0].items():
+        if index >= 2 and index <= 6:
+            costChartCol += '["%s",' % convert.get(key)
+            for a in amount:
+                costChartCol += '%s,' % a[index-1]
+            costChartCol += '],'
+        index += 1
+    costChartCol += '],'
+
+
+
+    context["title"] = title
+    context["amountTable"] = amountTable
+    context["costTable"] = costTable
+    context["amountChartCol"] = amountChartCol
+    context["costChartCol"] = costChartCol
+
+    return render(request, "chart6.html", {
+        'context':context
     })

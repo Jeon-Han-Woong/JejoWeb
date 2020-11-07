@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+
+</script>
+
+
+<script src="{% static 'js/utils.js' %}"></script>
+
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<script src="{% static 'js/billboard.js' %}"></script>
+
+
+
+<link rel="stylesheet" href="{% static 'assets/css/billboard.css' %}">
+
+<link rel="stylesheet" href="{% static 'assets/css/theme/insight.min.css' %}">
+{% endblock %}
+
+{% block body %}
+
+{% include "navbar.html" %}
+
+<main id="main">
+
+
+    <!-- ======= Breadcrumbs ======= -->
+    <section id="breadcrumbs" class="breadcrumbs">
+        <div class="container">
+
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Chart</h2>
+                <ol>
+                    <li><a href="/">Home</a></li>
+                    <li>Chart</li>
+                </ol>
+            </div>
+
+        </div>
+    </section><!-- End Breadcrumbs -->
+
+    <!-- ======= Services Section ======= -->
+    <section id="services" class="services section-bg">
+        <div class="container">
+
+            <div class="section-title">
+                <h2>Chart</h2>
+                <p>{{context.title}}</p>
+            </div>
+
+            <div class="row" data-aos="fade-up" data-aos-delay="200">
+                <select id="code">
+                  <option value="KOR">KOR</option>
+                  <option value="TWN">TWN</option>
+                  <option value="SCN">SCN</option>
+                  <option value="NCN">NCN</option>
+                  <option value="SGP">SGP</option>
+                </select>
+
+                <select id="year">
+                  <option value="2018">2018년</option>
+                  <option value="2019">2019년</option>
+                  <option value="2020">2020년</option>
+                </select>
+
+                <button class="btn btn-primary lookup" type="submit" onclick="lookupClick();">조회</button>
+
+
+                <div id="container" style="width: 90%;">
+
+
+                    <div id="combinationChartA"></div>
+
+                    {{context.amountTable|safe}}
+
+                    <div id="combinationChartC"></div>
+
+                    {{context.costTable|safe}}
+
+
+                </div>
+            </div>
+
+            <div class="row" data-aos="fade-up" data-aos-delay="200">
+            </div>
+
+        </div>
+    </section><!-- End Services Section -->
+
+</main>
+{% include "footer.html" %}
+
+<script>
+function lookupClick() {
+    let code = document.getElementById("code");
+    let codeValue = code.options[code.selectedIndex].value;
+    let year = document.getElementById("year");
+    let yearValue = year.options[year.selectedIndex].value;
+
+    let list = new Array();
+    let data = new Object();
+    data.code = codeValue;
+    data.year = yearValue;
+    list.push(data);
+
+    let jsonData = JSON.stringify(list);
+    console.log(jsonData);
+    location.href = "/chart6?data=" + jsonData;
+}
+
+
+        var chartA = bb.generate({
+        title: {
+    text: "수량 그래프"
+  },
+data: {
+    columns: {{context.amountChartCol|safe}}
+    type: "bar",
+    types: {
+    기초: "line",
+    기말: "line",
+    재고회전: "spline"
+    },
+    groups: [
+    [
+    "입고",
+    "출고"
+    ]
+],
+axes: {
+재고회전: "y2"
+},
+colors: {
+입고: "#f39c12",
+출고: "#16a085",
+기초: "#c0392b",
+기말: "#2980b9",
+재고회전:"#2ecc71"
+},
+
+},
+        axis: {
+         y:{
+         label:"수량"
+         },
+        y2: {
+        label:"재고회전(%)",
+        show: true
+        },
+                x: {
+                        type: "category",
+                                categories: [
+                                        "1월",
+                                        "2월",
+                                        "3월",
+                                        "4월",
+                                        "5월",
+                                        "6월",
+                                        "7월",
+                                        "8월",
+                                        "9월",
+                                        "10월",
+                                        "11월",
+                                        "12월"
+                                ]
+                }
+        },
+        bindto: "#combinationChartA"
+});
+
+var chartC = bb.generate({
+        title: {
+    text: "금액 그래프"
+  },
+                data: {
+                        columns: {{context.costChartCol|safe}}
+        type: "bar",
+                types: {
+                기초: "line",
+                        기말: "line",
+                        재고회전:"spline"
+        },
+        groups: [
+                [
+                        "입고",
+                        "출고"
+                ]
+        ],
+axes: {
+재고회전: "y2"
+},
+  colors: {
+      입고: "#f39c12",
+      출고: "#16a085",
+      기초: "#c0392b",
+      기말: "#2980b9",
+재고회전:"#2ecc71"
+          },
+
+  },
+        axis: {
+         y:{
+         label:"금액"
+         },
+        y2: {
+        label:"재고회전(%)",
+        show: true
+        },
+                x: {
+                        type: "category",
+                                categories: [
+                                        "1월",
+                                        "2월",
+                                        "3월",
+                                        "4월",
+                                        "5월",
+                                        "6월",
+                                        "7월",
+                                        "8월",
+                                        "9월",
+                                        "10월",
+                                        "11월",
+                                        "12월"
+                                ]
+                }
+        },
+        bindto: "#combinationChartC"
+});
+</script>
+{% endblock %}
