@@ -23,7 +23,6 @@ class CMAnalysis(models.Model):
     def __str__(self):
         return "분석 제목 : " + self.a_title + ", 주관자 : " + self.a_owner
 
-
 #    a_no = models.IntegerField(db_column='a_no', default=0)
 #   a_no = models.ForeignKey(CMAnalysis, on_delete=models.CASCADE)
 class CHAnalysisStep(models.Model):
